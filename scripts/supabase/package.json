@@ -1,0 +1,21 @@
+{
+  "name": "kitchen-helper-import",
+  "version": "1.0.0",
+  "description": "厨房助手菜谱导入脚本",
+  "main": "connect_import.js",
+  "type": "module",
+  "scripts": {
+    "import": "node connect_import.js",
+    "import:direct": "node update_connect_import.js"
+  },
+  "keywords": [
+    "supabase",
+    "import",
+    "kitchen-helper"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.3"
+  }
+} 

@@ -15,6 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { getAllRecipes, toggleFavorite, getRecommendedRecipes, calculateMissingIngredients } from '../services/recipeService';
 import { getUserIngredientNames } from '../services/ingredientService';
 import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const HomePage: React.FC = () => {
   const [showFilterBar, setShowFilterBar] = useState(false);
@@ -25,6 +26,7 @@ const HomePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const { inventory } = useInventory();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // 获取菜谱数据
   useEffect(() => {
@@ -232,7 +234,7 @@ const HomePage: React.FC = () => {
         {/* Recipe Cards */}
         {!loading && filteredRecipes.length > 0 && (
           <div className="space-y-4 mb-6">
-            {filteredRecipes.map((recipe, index) => (
+            {filteredRecipes.slice(0, 4).map((recipe, index) => (
               <RecipeCard 
                 key={recipe.id} 
                 recipe={recipe} 
@@ -240,6 +242,18 @@ const HomePage: React.FC = () => {
                 delay={index}
               />
             ))}
+            
+            {/* 查看更多按钮 */}
+            {filteredRecipes.length > 4 && (
+              <div className="text-center pt-2">
+                <button 
+                  onClick={() => navigate('/recipes')}
+                  className="px-4 py-2 bg-indigo-500 text-white rounded-full text-sm hover:bg-indigo-600 transition duration-200"
+                >
+                  查看更多菜谱 ({filteredRecipes.length - 4}+)
+                </button>
+              </div>
+            )}
           </div>
         )}
         

@@ -18,17 +18,19 @@ Kitchen Helper App 是一个帮助用户管理家庭食材库存、智能推荐�
 - 前端与Supabase数据库实时同步
 - 权限与RLS策略配置（系统食材所有用户可读，个人库存仅本人可读写）
 - 支持多端口自动切换，热更新
+- CSV导入批量扩充菜谱库（新增）
 
 ---
 
 ## 二、技术栈与主要依赖
 
 - **前端框架**：React + TypeScript
-- **构建工具**：Vite
+- **构建工具**：Vite (v5.4.8)
 - **UI 框架**：TailwindCSS
 - **对话框组件**：@headlessui/react
 - **状态管理**：React Context
 - **数据库**：Supabase（PostgreSQL，含 RLS 权限控制）
+- **构建&辅助工具**：csv-parse（用于CSV数据处理）
 - **AI 协作**：Claude（UI原型设计）、Cursor（代码实现）
 
 ---
@@ -68,16 +70,29 @@ Kitchen menu/
 
 ## 四、数据库设计（Supabase）
 
-- **users**：用户表（由Supabase Auth自动管理）
-- **ingredients**：系统食材库（含unit、category_id等字段）
-- **ingredient_categories**：食材分类
-- **user_ingredients**：用户个人库存
-- **recipes**：菜谱数据
+### 核心数据表
+
+- **ingredients**：系统食材库（包含名称、单位、分类等）
+- **ingredient_categories**：食材分类表（蔬菜、肉类、调味料等）
+- **recipes**：菜谱主表（名称、描述、难度、烹饪时间等）
+- **recipe_ingredients**：菜谱食材关联表（记录菜谱所需的食材及用量）
+- **recipe_steps**：菜谱步骤表（详细烹饪步骤及操作）
+- **recipe_tags**：菜谱标签表（菜系、难度、特色等标签）
+- **recipe_tips**：菜谱小贴士表（烹饪提示和技巧）
+- **recipe_pairings**：菜谱搭配表（推荐搭配的其他菜品）
+
+### 用户相关表
+
+- **profiles**：用户档案表（由Supabase Auth关联，存储用户个性化信息）
+- **cooking_history**：用户烹饪历史记录（记录用户烹饪过的菜品）
+- **cooking_templates**：烹饪模板（基础烹饪方法模板）
+- **milestones**：用户成就里程碑（完成特定烹饪任务的记录）
+- **user_stats**：用户统计数据（烹饪频率、擅长菜系等）
 
 ### 权限与安全
 - 所有表均启用 Row Level Security (RLS)
 - ingredients 表：所有已登录用户可读
-- user_ingredients 表：仅各自用户可读写
+- profiles 相关表：仅各自用户可读写
 - 通过 Supabase 控制台手动设置策略
 
 ---
@@ -200,3 +215,49 @@ Kitchen menu/
 ---
 
 如需进一步细节（如表结构SQL、RLS策略SQL、页面UI草图等），可随时补充。
+
+## 七、数据导入工具
+
+项目新增了CSV数据导入工具，用于批量扩充菜谱库：
+
+### 1. 工具位置
+
+- `scripts/convert_csv_to_sql.js` - CSV转SQL脚本
+- `sql/import_recipes.sql` - SQL导入逻辑
+- `kitchen_seeds_csv/` - CSV数据目录
+
+### 2. 支持的CSV格式
+
+支持导入三种CSV文件：
+- 食材文件（格式：name,type,default_unit,category,note）
+- 菜谱文件（格式：title,intro_md,cuisine,difficulty,est_minutes）
+- 菜谱食材关系（格式：recipe_title,item_name,qty,unit）
+
+### 3. 使用方法
+
+#### 方法一：CLI自动同步（推荐）
+
+1. 将CSV文件放入`kitchen_seeds_csv/`目录
+2. 安装依赖：`npm install`
+3. 运行同步命令：`npm run sync-recipes`
+4. 按提示输入Supabase URL和密钥
+5. 确认导入并等待完成
+
+#### 方法二：手动SQL导入
+
+1. 将CSV文件放入`kitchen_seeds_csv/`目录
+2. 安装依赖：`npm install csv-parse`
+3. 运行转换脚本：`node scripts/convert_csv_to_sql.js`
+4. 在Supabase管理界面的SQL编辑器中执行生成的SQL文件
+
+详细使用说明请参考：
+- `scripts/README.md`（脚本使用指南）
+- `scripts/SYNC_README.md`（自动同步工具使用指南）
+- `sql/README.md`（SQL导入指南）
+
+## 十一、后续开发建议
+
+1. **菜谱库扩充**：
+   - 现已实现通过CSV批量导入菜谱功能
+   - 可进一步开发用户提交自定义菜谱功能
+   - 考虑使用AI生成菜谱步骤和描述，提高数据质量
